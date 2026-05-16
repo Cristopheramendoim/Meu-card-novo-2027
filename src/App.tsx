@@ -597,8 +597,13 @@ export default function App() {
           <p className="text-xl md:text-3xl lg:text-4xl text-white font-bold z-10 mt-4 drop-shadow-[0_0_10px_rgba(255,105,180,0.8)] animate-pulse px-6">
             Eu sou muito pequenininha e docinha pra virar lanchinho! 😭🍓🎀
           </p>
+
+          <a href="https://www.vakinha.com.br/vaquinha/notebook-para-trabalhar-deficiente" target="_blank" rel="noreferrer" className="mt-8 px-6 py-3 md:px-8 md:py-4 md:text-xl bg-orange-500 font-bold text-white rounded-full hover:bg-orange-600 transition z-20 cursor-pointer shadow-[0_0_20px_rgba(255,165,0,0.8)] border-2 border-white/50 flex flex-col items-center">
+            <span>Se você não me comer e for uma pessoa muito boazinha... 🥺</span>
+            <span className="text-sm md:text-base opacity-90 mt-1">Me ajuda com uma doaçãozinha linda na minha vakinha? 🐮💖✨</span>
+          </a>
           
-          <button className="mt-8 px-6 py-3 md:px-8 md:py-4 md:text-xl bg-pink-500 font-bold text-white rounded-full hover:bg-pink-600 transition z-20 cursor-pointer shadow-[0_0_20px_rgba(255,105,180,0.8)] border-2 border-white/50" onClick={() => setPollState('idle')}>Vou ser bonzinha e te perdoarzinho 🌸</button>
+          <button className="mt-4 px-6 py-3 md:px-8 md:py-4 md:text-xl bg-pink-500 font-bold text-white rounded-full hover:bg-pink-600 transition z-20 cursor-pointer shadow-[0_0_20px_rgba(255,105,180,0.8)] border-2 border-white/50" onClick={() => setPollState('idle')}>Vou ser bonzinha e te perdoarzinho 🌸</button>
         </div>
       )}
     </>

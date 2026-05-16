@@ -336,6 +336,12 @@ export default function App() {
             )}
             
             <button className="modal-close" onClick={() => setPollModalOpen(false)}>Cancelar</button>
+
+            <div className="mt-8 text-center">
+               <a href="https://x.com/EsterNinfo" target="_blank" rel="noreferrer" className="text-[10px] text-gray-600/30 hover:text-red-400/80 transition-colors duration-300" onClick={() => setPollModalOpen(false)}>
+                 🔞 psst... já sou de maiorzinho e quero ver coisinhas erradinhas
+               </a>
+            </div>
           </div>
         </div>
       )}

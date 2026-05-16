@@ -1,0 +1,6 @@
+Este diretório é para você adicionar as imagens do seu perfil e do seu portfólio.
+Você pode fazer upload de arquivos aqui usando a barra lateral direita no Google AI Studio.
+
+Para referência no site:
+Se você enviar um arquivo chamado "foto-perfil.jpg" ou "minha-arte.png" para esta pasta public/perfil, você poderá alterar o código no `App.tsx` para usar o link:
+`/perfil/foto-perfil.jpg` ou `/perfil/minha-arte.png`

@@ -20,7 +20,7 @@ export default function App() {
     if (pollStep < 3) {
       setPollStep(pollStep + 1);
     } else {
-      window.open("https://youtube.com/shorts/Xe6h3wCjfBE?si=kcAPZtKpH0MuFI0s", "_blank");
+      window.open("https://youtu.be/dQw4w9WgXcQ?si=Of1a9ABW5VC9kMz3", "_blank");
       setPollModalOpen(false);
       setPollState('answered');
       setPollStep(1); // reset step for next time, though unlikely to be used again

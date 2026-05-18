@@ -20,7 +20,7 @@ export default function App() {
     if (pollStep < 3) {
       setPollStep(pollStep + 1);
     } else {
-      window.open("https://youtu.be/LACbVhgtx9I?si=5PJZ3QOYq8YO40Dp", "_blank");
+      window.open("https://youtube.com/shorts/Xe6h3wCjfBE?si=kcAPZtKpH0MuFI0s", "_blank");
       setPollModalOpen(false);
       setPollState('answered');
       setPollStep(1); // reset step for next time, though unlikely to be used again
@@ -557,6 +557,18 @@ export default function App() {
           </div>
 
           <div className="section-label">Apoio & Loja</div>
+
+          <a href="https://www.vakinha.com.br/vaquinha/notebook-para-trabalhar-deficiente" className="link-card card-vakinha" style={{ borderLeftColor: '#f59e0b' }} onClick={(e) => handleExternalLink(e, "https://www.vakinha.com.br/vaquinha/notebook-para-trabalhar-deficiente")}>
+            <div className="card-icon icon-vakinha" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            </div>
+            <div className="card-info">
+              <div className="card-title" style={{ color: '#f59e0b', fontSize: '1.05rem' }}>Meu 1º PCzinho de Edição! 🥺💻</div>
+              <div className="card-sub">Me dá essa forcinha na Vakinha? Cada centavo ajuda a realizar meu sonhozinho de trabalhar! ✨💖</div>
+            </div>
+            <span className="card-arrow" style={{ color: '#f59e0b' }}>&#8594;</span>
+          </a>
+
           <a href="https://umapenca.com/crishfly/" className="link-card card-loja" onClick={(e) => handleExternalLink(e, "https://umapenca.com/crishfly/")}>
             <div className="card-icon icon-loja"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd93d" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg></div>
             <div className="card-info"><div className="card-title">Loja de Roupas</div><div className="card-sub">Confira os meus lançamentos ✨</div></div>

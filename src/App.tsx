@@ -9,6 +9,7 @@ export default function App() {
   const [pollStep, setPollStep] = useState(1);
   const [pollState, setPollState] = useState<'idle' | 'answered'>('idle');
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [musicMuted, setMusicMuted] = useState(true);
 
   useEffect(() => {
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -622,6 +623,50 @@ export default function App() {
           </a>
           
           <button className="mt-4 px-6 py-3 md:px-8 md:py-4 md:text-xl bg-pink-500 font-bold text-white rounded-full hover:bg-pink-600 transition z-20 cursor-pointer shadow-[0_0_20px_rgba(255,105,180,0.8)] border-2 border-white/50" onClick={() => setPollState('idle')}>Vou ser bonzinha e te perdoarzinho 🌸</button>
+        </div>
+      )}
+
+      {/* Musiquinha de Fundo */}
+      <div className="fixed bottom-4 right-4 z-50 flex items-center justify-center gap-3">
+        {musicMuted && (
+          <div className="bg-white/90 text-pink-600 px-3 md:px-4 py-2 rounded-2xl text-xs md:text-sm font-bold shadow-[0_0_15px_rgba(255,105,180,0.6)] animate-bounce max-w-[150px] md:max-w-none text-center cursor-pointer pointer-events-auto" onClick={() => setMusicMuted(false)}>
+            Clica aqui pra ouvir uma musiquinha! 🥺🎶
+          </div>
+        )}
+
+        <button
+          onClick={() => setMusicMuted(!musicMuted)}
+          className={`group flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all duration-300 backdrop-blur-md overflow-hidden ${
+            musicMuted 
+              ? 'bg-black/80 border-gray-500 shadow-[0_0_10px_rgba(156,163,175,0.5)]' 
+              : 'bg-black/60 border-pink-500 shadow-[0_0_15px_#ff00ff,inset_0_0_10px_#ff00ff] hover:shadow-[0_0_25px_#ff00ff,inset_0_0_15px_#ff00ff]'
+          }`}
+          title={musicMuted ? "Desmutar musiquinha" : "Mutar musiquinha"}
+        >
+          <span className={`text-xl md:text-2xl transition-all duration-300 ${!musicMuted ? 'animate-pulse drop-shadow-[0_0_8px_#ff00ff]' : 'grayscale opacity-60'}`}>
+            {musicMuted ? '🔇' : '🎵'}
+          </span>
+          
+          {/* Neon Glow Rings */}
+          {!musicMuted && (
+            <>
+              <div className="absolute inset-0 rounded-full border border-pink-400 opacity-50 animate-[ping_2s_ease-out_infinite]"></div>
+              <div className="absolute inset-0 rounded-full border border-purple-500 opacity-30 animate-[ping_3s_ease-out_infinite_animation-delay-500ms]"></div>
+            </>
+          )}
+        </button>
+      </div>
+
+      {!musicMuted && (
+        <div className="fixed top-[-1000px] left-[-1000px] w-[10px] h-[10px] pointer-events-none z-[-999]" style={{ opacity: 0.001 }}>
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube-nocookie.com/embed/RdP9PWm9pRo?autoplay=1&loop=1&playlist=RdP9PWm9pRo&controls=0&mute=0"
+            title="Music Player"
+            allow="autoplay; encrypted-media"
+            frameBorder="0"
+          />
         </div>
       )}
     </>

@@ -416,7 +416,14 @@ export default function App() {
                     </h3>
                 </div>
                 
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-8 sm:overflow-visible sm:pb-0 no-scrollbar -mx-6 px-6 sm:mx-0 sm:px-0">
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 sm:grid sm:grid-cols-2 md:grid-cols-4 sm:gap-8 sm:overflow-visible sm:pb-0 no-scrollbar -mx-6 px-6 sm:mx-0 sm:px-0">
+                    <div className="flex-none w-[75%] sm:w-auto snap-center flex flex-col gap-3">
+                        <div className="aspect-[9/16] bg-[#252525] rounded-lg overflow-hidden border border-[#333] shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all hover:border-red-600">
+                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/TeAx8n5atkA" title="Edição Dinâmica" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                        </div>
+                        <p className="text-sm text-gray-400 font-medium px-1">Edição Dinâmica (Shorts)</p>
+                    </div>
+
                     <div className="flex-none w-[75%] sm:w-auto snap-center flex flex-col gap-3">
                         <div className="aspect-[9/16] bg-[#252525] rounded-lg overflow-hidden border border-[#333] shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all hover:border-red-600">
                             <iframe width="100%" height="100%" src="https://www.youtube.com/embed/nQrvuRuhTkM" title="VSL" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>

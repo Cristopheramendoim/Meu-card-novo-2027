@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Crishfly ✦",
+  "description": "An ultra-lightweight, high-performance portfolio and link-in-bio page for Crishfly.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,674 +1,429 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Confetti from 'react-confetti';
+import { useState } from "react";
+import { 
+  Palette, 
+  Sparkles, 
+  ArrowRight, 
+  ChevronRight, 
+  ArrowLeft, 
+  Copy, 
+  Check,
+  Send,
+  Heart,
+  Award,
+  Zap,
+  ShoppingBag
+} from "lucide-react";
+
+// Components
+import Header from "./components/Header";
+import SocialCard from "./components/SocialCard";
+import ArtworkCard from "./components/ArtworkCard";
+import Modal from "./components/Modal";
+import Footer from "./components/Footer";
+import Sigil from "./components/Sigil";
+import ShaderBackground from "./components/ShaderBackground";
+
+// Configurations & Domain Data
+import { APP_CONFIG, SOCIAL_LINKS, FEATURE_CARDS } from "./config/appConfig";
+import { PORTFOLIO_ARTWORKS } from "./data/artworks";
+import { Artwork } from "./types";
 
 export default function App() {
-  const [portfolioOpen, setPortfolioOpen] = useState(false);
+  // Navigation & Modal States
+  const [activeTab, setActiveTab] = useState<"links" | "portfolio">("links");
   const [drawingsOpen, setDrawingsOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
-  const [pollModalOpen, setPollModalOpen] = useState(false);
-  const [pollStep, setPollStep] = useState(1);
-  const [pollState, setPollState] = useState<'idle' | 'answered'>('idle');
-  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [musicMuted, setMusicMuted] = useState(true);
+  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [copiedPix, setCopiedPix] = useState(false);
+  const [exclusiveModalOpen, setExclusiveModalOpen] = useState(false);
 
-  useEffect(() => {
-    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handlePollAnswer = () => {
-    if (pollStep < 3) {
-      setPollStep(pollStep + 1);
-    } else {
-      window.open("https://youtu.be/dQw4w9WgXcQ?si=Of1a9ABW5VC9kMz3", "_blank");
-      setPollModalOpen(false);
-      setPollState('answered');
-      setPollStep(1); // reset step for next time, though unlikely to be used again
-    }
+  // Copy Pix Key Logic (Adaptive state interaction)
+  const handleCopyPix = () => {
+    navigator.clipboard.writeText(APP_CONFIG.pixKey);
+    setCopiedPix(true);
+    setTimeout(() => setCopiedPix(false), 2000);
   };
-
-  // Canvas Refs
-  const waterBgRef = useRef<HTMLCanvasElement>(null);
-  const introCanvasRef = useRef<HTMLCanvasElement>(null);
-  const irisCanvasRef = useRef<HTMLCanvasElement>(null);
-
-  const galleryImgs = [
-    "/perfil/1769448335268~2.png", // Sua imagem carregada
-    "/Artes/116 Sem TÃ­tulo_20260404030523.jpg",
-    "/Artes/116 Sem TÃ­tulo_20260404143137.jpg",
-    "/Artes/127 Sem TÃ­tulo.jpg",
-    "/Artes/136 Sem TÃ­tulo_20260513182821.png",
-    "/Artes/136 Sem TÃ­tulo_20260513183143.png",
-    "/Artes/54 Sem TÃ­tulo_20260122211155~2.png",
-    "/Artes/6 Sem TÃ­tulo_20251127150736.png",
-    "/Artes/76 Sem TÃ­tulo_20260212214308.jpg",
-    "/Artes/83 Sem TÃ­tulo_20260323193430.png",
-    "/Artes/87 Sem TÃ­tulo_20260219210152.jpg",
-    "/Artes/92 Sem TÃ­tulo_20260307010148.png",
-    "/Artes/95 Sem TÃ­tulo_20260310002308.png",
-    "/Artes/96 Sem TÃ­tulo_20260310160633.png",
-    "/Artes/96 Sem TÃ­tulo_20260310160654.png",
-    "/Artes/97 Sem TÃ­tulo_20260307012506.png",
-    "/Artes/vectorink-0e37xk4ef_17571069841471918~3.png",
-    "/Artes/vectorink-1omlh6iaa_1761431989050236534.png",
-    "/Artes/vectorink-4dfe4bvuo_1761432778430435896.png",
-    "/Artes/vectorink-4xc9lu81u_176143156513098890.png",
-    "/Artes/vectorink-6hs0v9ejb_176557609323870945.png",
-    "/Artes/vectorink-d554zlinl_1757029500636216306.png",
-    "/Artes/vectorink-fdlxh5ywx_174226598135434389.jpg",
-    "/Artes/vectorink-jkvp8oyup_176606977140762986.png",
-    "/Artes/vectorink-l00ds7xu2_175063180333812189.png",
-    "/Artes/vectorink-mklc18lb7_176040683630296117~2.png",
-    "/Artes/vectorink-mrvofxryx_175063183413119587.png",
-    "/Artes/vectorink-ob8kojv0t_17669584314014291.png",
-    "/Artes/vectorink-p7wg15kc4_174278607886135125.png",
-    "/Artes/vectorink-pnf7k2o6y_174095015064311958.png",
-    "/Artes/vectorink-pq3lp8gtv_1761433196667557489.png",
-    "/Artes/vectorink-wxja8wb10_17409500840462420.png",
-    "/Artes/vectorink-wzfw22zhy_17420891507242273.png",
-    "/Artes/vectorink-xgpfyubt5_176557602888962764.png",
-    "/Artes/vectorink-xksp50pye_176557605733965952.png"
-  ];
-
-  const profileImg = "/perfil/1769448335268~2.png";
-
-  const irisTransition = useCallback((onMidpoint: () => void) => {
-    const canvas = irisCanvasRef.current;
-    if (!canvas) return;
-    canvas.width = window.innerWidth; 
-    canvas.height = window.innerHeight;
-    canvas.style.display = 'block';
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2;
-    const maxR = Math.sqrt(cx * cx + cy * cy) + 10;
-    let r = maxR; 
-    const speed = maxR / 18;
-    
-    function closeIris() {
-      if(!ctx || !canvas) return;
-      ctx.clearRect(0, 0, W, H); 
-      ctx.fillStyle = '#0a0a0a'; 
-      ctx.fillRect(0, 0, W, H);
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath(); 
-      ctx.arc(cx, cy, Math.max(0, r), 0, Math.PI * 2); 
-      ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-      r -= speed;
-      if (r > 0) { 
-        requestAnimationFrame(closeIris); 
-      } else {
-        onMidpoint();
-        r = 0;
-        function openIris() {
-          if(!ctx || !canvas) return;
-          ctx.clearRect(0, 0, W, H); 
-          ctx.fillStyle = '#0a0a0a'; 
-          ctx.fillRect(0, 0, W, H);
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.beginPath(); 
-          ctx.arc(cx, cy, r, 0, Math.PI * 2); 
-          ctx.fill();
-          ctx.globalCompositeOperation = 'source-over';
-          r += speed * 1.4;
-          if (r < maxR) { 
-            requestAnimationFrame(openIris); 
-          } else { 
-            canvas.style.display = 'none'; 
-          }
-        }
-        requestAnimationFrame(openIris);
-      }
-    }
-    requestAnimationFrame(closeIris);
-  }, []);
-
-  const openPortfolio = (e: React.MouseEvent) => {
-    e.preventDefault();
-    irisTransition(() => {
-      setPortfolioOpen(true);
-      window.scrollTo(0, 0);
-    });
-  };
-
-  const closePortfolio = () => {
-    irisTransition(() => {
-      setPortfolioOpen(false);
-    });
-  };
-
-  const handleExternalLink = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
-    e.preventDefault();
-    irisTransition(() => {
-      window.open(url, '_blank');
-    });
-  };
-
-  // Water Background logic
-  useEffect(() => {
-    const canvas = waterBgRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    let W = 0, H = 0;
-    let animationId: number;
-
-    function resize() {
-      if (!canvas) return;
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    const layers = [
-      { amp: 18, freq: 0.008, speed: 0.6, yBase: 0.55, color: 'rgba(120,0,255,0.18)', lw: 2 },
-      { amp: 14, freq: 0.012, speed: 0.9, yBase: 0.60, color: 'rgba(0,200,255,0.14)', lw: 1.5 },
-      { amp: 22, freq: 0.006, speed: 0.4, yBase: 0.65, color: 'rgba(160,0,255,0.20)', lw: 2.5 },
-      { amp: 10, freq: 0.018, speed: 1.2, yBase: 0.70, color: 'rgba(0,150,255,0.12)', lw: 1 },
-      { amp: 28, freq: 0.005, speed: 0.3, yBase: 0.75, color: 'rgba(200,0,255,0.15)', lw: 3 },
-      { amp: 8, freq: 0.025, speed: 1.8, yBase: 0.80, color: 'rgba(80,0,200,0.10)', lw: 1 },
-    ];
-    function draw(t: number) {
-      if(!ctx) return;
-      ctx.clearRect(0, 0, W, H);
-      const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#05001a'); bg.addColorStop(0.5, '#0a0022'); bg.addColorStop(1, '#000010');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-      layers.forEach(l => {
-        const yMid = H * l.yBase;
-        ctx.save(); ctx.shadowColor = l.color; ctx.shadowBlur = 20;
-        ctx.beginPath(); ctx.moveTo(0, yMid);
-        for (let x = 0; x <= W; x += 2) {
-          const y = yMid + Math.sin(x * l.freq + t * l.speed) * l.amp + Math.sin(x * l.freq * 1.6 + t * l.speed * 0.7) * l.amp * 0.4;
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-        const wg = ctx.createLinearGradient(0, yMid - l.amp, 0, yMid + l.amp + 60);
-        wg.addColorStop(0, l.color); wg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = wg; ctx.fill(); ctx.restore();
-        ctx.save(); ctx.shadowColor = l.color; ctx.shadowBlur = 8;
-        ctx.beginPath(); ctx.moveTo(0, yMid);
-        for (let x = 0; x <= W; x += 2) {
-          const y = yMid + Math.sin(x * l.freq + t * l.speed) * l.amp + Math.sin(x * l.freq * 1.6 + t * l.speed * 0.7) * l.amp * 0.4;
-          ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = l.color.replace(',0.', ',0.5'); ctx.lineWidth = l.lw; ctx.stroke(); ctx.restore();
-      });
-      if (Math.random() < 0.15) {
-        const sx = Math.random() * W, waveY = H * 0.65 + Math.sin(sx * 0.006 + t * 0.4) * 22;
-        ctx.save(); ctx.shadowColor = '#c77dff'; ctx.shadowBlur = 14;
-        ctx.beginPath(); ctx.arc(sx, waveY, 1.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(200,120,255,0.8)'; ctx.fill(); ctx.restore();
-      }
-    }
-    let t = 0;
-    function loop() {
-      t += 0.016; draw(t); animationId = requestAnimationFrame(loop);
-    }
-    loop();
-    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationId); };
-  }, []);
-
-  // Intro Canvas logic
-  useEffect(() => {
-    const canvas = introCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const W = canvas.width = window.innerWidth, H = canvas.height = window.innerHeight;
-    const N = 100, surf = new Float32Array(N), vel = new Float32Array(N);
-    function disturbAt(pct: number, str: number) { const i = Math.floor(pct * N); vel[Math.min(N - 1, Math.max(0, i))] += str; }
-    function stepWave() {
-      for (let i = 0; i < N; i++) vel[i] += -0.035 * surf[i];
-      for (let i = 1; i < N - 1; i++) vel[i] += 0.28 * (surf[i - 1] + surf[i + 1] - 2 * surf[i]);
-      for (let i = 0; i < N; i++) { vel[i] *= 0.93; surf[i] += vel[i]; }
-    }
-    let phase = 0, phaseStart = performance.now();
-    let animationId: number;
-    let floodY = H;
-    
-    function loop(now: number) {
-      if(!ctx) return;
-      ctx.clearRect(0, 0, W, H);
-      const pt = (now - phaseStart) / 1000, segW = W / N;
-      function drawWater(topY: number, alpha: number) {
-        if (alpha <= 0 || !ctx) return;
-        stepWave();
-        if (Math.random() < 0.3) disturbAt(Math.random(), (Math.random() - 0.5) * 14);
-        ctx.beginPath(); ctx.moveTo(0, topY + surf[0]);
-        for (let i = 1; i < N; i++) ctx.lineTo(i * segW, topY + surf[i]);
-        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-        const g = ctx.createLinearGradient(0, topY - 40, 0, H);
-        g.addColorStop(0, 'rgba(160,0,255,' + (alpha * 0.9) + ')');
-        g.addColorStop(0.15, 'rgba(80,0,200,' + (alpha * 0.85) + ')');
-        g.addColorStop(0.5, 'rgba(30,0,80,' + (alpha * 0.95) + ')');
-        g.addColorStop(1, 'rgba(0,0,20,' + alpha + ')');
-        ctx.fillStyle = g; ctx.fill();
-        ctx.save(); ctx.shadowColor = '#b000ff'; ctx.shadowBlur = 18;
-        ctx.beginPath(); ctx.moveTo(0, topY + surf[0]);
-        for (let i = 1; i < N; i++) ctx.lineTo(i * segW, topY + surf[i]);
-        ctx.strokeStyle = 'rgba(180,0,255,' + Math.min(1, alpha * 1.2) + ')'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
-      }
-      if (phase === 0) {
-        const p = Math.min(1, pt / 1.4), ease = 1 - Math.pow(1 - p, 3);
-        floodY = H * (1 - ease); drawWater(floodY, 0.92); if (p >= 1) { phase = 1; phaseStart = now; }
-      } else if (phase === 1) {
-        drawWater(0, 0.92); if (pt >= 1.0) { phase = 2; phaseStart = now; }
-      } else if (phase === 2) {
-        const p = Math.min(1, pt / 1.4), ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-        drawWater(H * ease, 0.92 * (1 - ease * 0.4)); if (p >= 1) { phase = 3; }
-      } else {
-        if(canvas) {
-          canvas.style.transition = 'opacity 0.5s'; canvas.style.opacity = '0';
-          setTimeout(() => { if(canvas) canvas.style.display = 'none'; }, 600);
-        }
-        return;
-      }
-      animationId = requestAnimationFrame(loop);
-    }
-    animationId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animationId);
-  }, []);
 
   return (
-    <>
-      <div id="waterBg"><canvas ref={waterBgRef}></canvas></div>
-      <canvas ref={introCanvasRef} id="introCanvas"></canvas>
-      <canvas ref={irisCanvasRef} id="irisCanvas"></canvas>
+    <div className="min-h-screen text-brand-text font-sans antialiased relative overflow-x-hidden selection:bg-brand-accent selection:text-brand-bg">
 
-      <div className="bg-blobs">
-        <div className="blob blob-1"></div><div className="blob blob-2"></div>
-        <div className="blob blob-3"></div><div className="blob blob-4"></div>
-      </div>
+      {/* Animated WebGL "Waves" flow shader, fixed behind all content */}
+      <ShaderBackground />
 
-      {lightboxIndex >= 0 && (
-        <div className="lightbox open" onClick={(e) => { if (e.target === e.currentTarget) setLightboxIndex(-1); }}>
-          <button className="lightbox-close" onClick={() => setLightboxIndex(-1)}>&#10005;</button>
-          <button className="lightbox-nav lightbox-prev" onClick={(e) => {
-            e.stopPropagation();
-            setLightboxIndex((prev) => (prev - 1 + galleryImgs.length) % galleryImgs.length);
-          }}>&#8249;</button>
-          <img src={galleryImgs[lightboxIndex]} alt="Arte expandida" />
-          <button className="lightbox-nav lightbox-next" onClick={(e) => {
-            e.stopPropagation();
-            setLightboxIndex((prev) => (prev + 1) % galleryImgs.length);
-          }}>&#8250;</button>
-        </div>
-      )}
+      {/* Decorative Top Border - Goth-Cute Sigil Bar */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-purple via-brand-accent to-brand-purple" />
 
-      {pollModalOpen && (
-        <div className="modal-overlay exclusive-modal open" onClick={(e) => { if (e.target === e.currentTarget) setPollModalOpen(false); }}>
-          <div className="modal">
-            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>{pollStep === 1 ? '👀' : pollStep === 2 ? '❤️' : '🔥'}</div>
-            <h2>Conteúdo Exclusivo - Enquete</h2>
-            <p className="text-gray-300 text-sm mb-6">
-              {pollStep === 1 && "Passo 1: O que mais te atrai em mim?"}
-              {pollStep === 2 && "Passo 2: Se fôssemos sair, qual seria o encontro perfeito?"}
-              {pollStep === 3 && "Passo 3: E o que você está esperando encontrar no meu lado mais exclusivo?"}
-            </p>
-            
-            {pollStep === 1 && (
-              <>
-                <button className="btn-apoiar w-full mb-3" onClick={handlePollAnswer}>O seu sorrisinho lindo e olharzinho marcante</button>
-                <button className="btn-apoiar w-full mb-3" style={{ background: 'linear-gradient(135deg,#00b4d8,#4d96ff)' }} onClick={handlePollAnswer}>A sua vozinha bem suave e docinha</button>
-                <button className="btn-apoiar w-full mb-3" style={{ background: 'linear-gradient(135deg,#6bcb77,#00b4d8)' }} onClick={handlePollAnswer}>O seu jeitinho talentoso e criativo</button>
-                <button className="btn-apoiar w-full mb-5" style={{ background: 'linear-gradient(135deg,#ffd93d,#ff9f43)' }} onClick={handlePollAnswer}>A sua personalidade divertidinha e charmosinha</button>
-              </>
-            )}
+      <main className="relative z-10 w-full max-w-xl mx-auto px-5 py-12 md:py-20 transition-all duration-300">
+        
+        {/* ======================================================== */}
+        {/* VIEW 1: LINKS & BIO                                      */}
+        {/* ======================================================== */}
+        {activeTab === "links" && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Header Component */}
+            <Header />
 
-            {pollStep === 2 && (
-              <>
-                <button className="btn-apoiar w-full mb-3" onClick={handlePollAnswer}>Um jantarzinho à luz de velas bem romântico</button>
-                <button className="btn-apoiar w-full mb-3" style={{ background: 'linear-gradient(135deg,#00b4d8,#4d96ff)' }} onClick={handlePollAnswer}>Assistir a um filminho coladinhos no sofá</button>
-                <button className="btn-apoiar w-full mb-3" style={{ background: 'linear-gradient(135deg,#6bcb77,#00b4d8)' }} onClick={handlePollAnswer}>Uma aventurazinha bem divertida e cheia de risadas</button>
-                <button className="btn-apoiar w-full mb-5" style={{ background: 'linear-gradient(135deg,#ffd93d,#ff9f43)' }} onClick={handlePollAnswer}>Um passeinho tranquilo em um lindo parque</button>
-              </>
-            )}
+            {/* Content Lists */}
+            <div className="space-y-3.5">
+              <div className="font-cinzel text-[10px] uppercase font-extrabold text-brand-accent tracking-[0.2em] flex items-center gap-2">
+                <span className="text-brand-purple">✦</span>
+                <span>{APP_CONFIG.ui.socialNetworksSection}</span>
+                <span className="gothic-rule" />
+              </div>
 
-            {pollStep === 3 && (
-              <>
-                <button className="btn-apoiar w-full mb-3" onClick={handlePollAnswer}>Um ladinho meu muito carinhoso e fofinho</button>
-                <button className="btn-apoiar w-full mb-3" style={{ background: 'linear-gradient(135deg,#00b4d8,#4d96ff)' }} onClick={handlePollAnswer}>Muito romance e momentinhos gostosos juntos</button>
-                <button className="btn-apoiar w-full mb-3" style={{ background: 'linear-gradient(135deg,#6bcb77,#00b4d8)' }} onClick={handlePollAnswer}>Segredinhos só nossos e muita intimidade</button>
-                <button className="btn-apoiar w-full mb-5" style={{ background: 'linear-gradient(135deg,#ffd93d,#ff9f43)' }} onClick={handlePollAnswer}>Uma amizadezinha cheia de flertes e brincadeiras</button>
-              </>
-            )}
-            
-            <button className="modal-close" onClick={() => setPollModalOpen(false)}>Cancelar</button>
+              {/* Social networks generated list */}
+              {SOCIAL_LINKS.map((link) => (
+                <SocialCard key={link.id} link={link} />
+              ))}
 
-            <div className="mt-8 text-center">
-               <a href="https://x.com/EsterNinfo" target="_blank" rel="noreferrer" className="text-[10px] text-gray-600/30 hover:text-red-400/80 transition-colors duration-300" onClick={() => setPollModalOpen(false)}>
-                 🔞 psst... já sou de maiorzinho e quero ver coisinhas erradinhas
-               </a>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="font-cinzel text-[10px] uppercase font-extrabold text-brand-accent tracking-[0.2em] pt-4 flex items-center gap-2">
+                <span className="text-brand-purple">✦</span>
+                <span>{APP_CONFIG.ui.workSupportSection}</span>
+                <span className="gothic-rule" />
+              </div>
 
-      {/* PORTFOLIO PAGE */}
-      <div id="portfolioPage" style={{ display: portfolioOpen ? 'block' : 'none', opacity: portfolioOpen ? 1 : 0, transition: 'opacity 0.3s' }}>
-        <button className="back-btn portfolio-btn-red" onClick={closePortfolio}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M5 12l7 7M5 12l7-7" /></svg>
-          Voltar
-        </button>
-        <div className="bg-[#111] min-h-screen font-sans text-[#D4D4D4]">
-          <div className="w-full h-48 md:h-64 overflow-hidden relative">
-            <img 
-                src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=80&w=2070&auto=format&fit=crop" 
-                alt="Professional Video Editing Timeline" 
-                className="w-full h-full object-cover opacity-50 grayscale"
-                referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111]"></div>
-          </div>
+              {/* Feature cards generated dynamically */}
+              {FEATURE_CARDS.map((card) => {
+                const getFeatureIcon = (type: string) => {
+                  switch (type) {
+                    case "award":
+                      return <Award className="w-4 h-4" />;
+                    case "heart":
+                      return <Heart className="w-4 h-4 fill-current" />;
+                    case "sparkles":
+                      return <Sparkles className="w-4 h-4" />;
+                    case "shopping-bag":
+                      return <ShoppingBag className="w-4 h-4" />;
+                    default:
+                      return <Send className="w-4 h-4" />;
+                  }
+                };
 
-          <main className="max-w-3xl mx-auto px-6 pb-20 -mt-12 relative z-10">
-            <div className="text-7xl mb-6 animate-float drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]">
-                🎬
-            </div>
+                const handleCardClick = () => {
+                  if (card.actionType === "tab") {
+                    setActiveTab(card.actionTarget);
+                  } else if (card.actionType === "modal") {
+                    if (card.actionTarget === "pix") {
+                      setPixModalOpen(true);
+                    } else if (card.actionTarget === "membership") {
+                      setExclusiveModalOpen(true);
+                    }
+                  } else if (card.actionType === "link") {
+                    window.open(card.actionTarget, "_blank", "noopener,noreferrer");
+                  }
+                };
 
-            <h1 className="text-5xl font-bold text-white mb-8 tracking-tight">
-                Portfólio
-            </h1>
-
-            <div className="space-y-6 text-[17px] leading-relaxed text-gray-300">
-                <h2 className="text-2xl font-semibold text-white flex items-center gap-2 mt-10 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
-                    Editor de VSL's
-                </h2>
-
-                <p>
-                    <strong className="text-white font-semibold">Olá, sou Crishfly</strong> — editor de vídeos especializado em marketing digital a 1 ano e focado em Direct Response.
-                </p>
-
-                <p>
-                    Transformo ideias em vídeos estratégicos que capturam atenção, engajam e convertem. Com expertise em criativos para anúncios e VSLs, ajudo empresas a se destacarem no mercado digital.
-                </p>
-
-                <p>
-                    Neste portfólio, você encontrará exemplos dos meus trabalhos que impulsionaram resultados reais para diversos negócios. Se você busca vídeos que realmente performam, está no lugar certo.
-                </p>
-
-                <div className="py-6 space-y-3 border-y border-[#333] my-10 text-base">
-                    <div className="flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-gray-400"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-                        <span>| Clonagem de voz | LipSync | ChatGPT | HeyGen |</span>
+                return (
+                  <button 
+                    key={card.id}
+                    onClick={handleCardClick}
+                    className="goth-corners w-full flex items-center gap-4 p-4 bg-brand-card border border-brand-border hover:border-brand-accent/50 rounded-xl hover:-translate-y-0.5 transition-all duration-200 group active:scale-[0.99] relative overflow-hidden pl-5 text-left cursor-pointer"
+                  >
+                    <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${card.accentStripClass || 'bg-brand-border'}`} />
+                    <Sigil className="pointer-events-none absolute -right-4 -top-4 w-16 h-16 text-brand-purple/[0.06] group-hover:text-brand-purple/[0.12] transition-colors duration-300" />
+                    <div className="w-9 h-9 rounded-lg bg-brand-secondary flex items-center justify-center text-brand-text shrink-0 border border-brand-border group-hover:bg-brand-card group-hover:border-brand-text/30 transition-colors duration-200 relative z-10">
+                      {getFeatureIcon(card.iconType)}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-gray-400"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                        <span>| 🇧🇷 Português |</span>
+                    <div className="flex-1 min-w-0 relative z-10">
+                      <h3 className="font-pirata text-sm md:text-base tracking-wide text-brand-text flex items-center gap-1.5">
+                        {card.title}
+                        {card.badge && (
+                          <span className="text-[9px] bg-brand-accent text-brand-bg px-1.5 py-0.5 rounded font-cinzel uppercase tracking-wider font-extrabold">
+                            {card.badge}
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-[11px] text-brand-muted font-light truncate mt-0.5">{card.subtext}</p>
                     </div>
+                    <ChevronRight className="w-4 h-4 text-brand-muted group-hover:text-brand-text group-hover:translate-x-0.5 transition-transform shrink-0 relative z-10" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Draw / Gallery Trigger Panel */}
+            <div className="space-y-4 pt-2">
+              <button 
+                onClick={() => setDrawingsOpen(!drawingsOpen)}
+                className={`goth-corners w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-300 relative overflow-hidden cursor-pointer ${
+                  drawingsOpen
+                    ? "bg-brand-secondary border-brand-accent"
+                    : "bg-brand-card border-brand-border hover:border-brand-accent/50"
+                }`}
+              >
+                <Sigil className="pointer-events-none absolute -right-6 -bottom-6 w-24 h-24 text-brand-purple/[0.06]" />
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className="w-9 h-9 rounded-lg bg-brand-card border border-brand-border flex items-center justify-center text-brand-text">
+                    <Palette className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-pirata text-sm md:text-base tracking-wide text-brand-text">{APP_CONFIG.ui.quickGalleryTitle}</h3>
+                    <p className="text-[11px] text-brand-muted font-light mt-0.5">{APP_CONFIG.ui.quickGallerySubtext}</p>
+                  </div>
                 </div>
-            </div>
 
-            {/* Galeria */}
-            <div className="mt-14">
-                <div className="flex items-center gap-2 mb-8">
-                    <div className="p-1.5 bg-[#333] rounded">
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white">
-                        Galeria: VSL
-                    </h3>
-                </div>
-                
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-8 sm:overflow-visible sm:pb-0 no-scrollbar -mx-6 px-6 sm:mx-0 sm:px-0">
-                    <div className="flex-none w-[75%] sm:w-auto snap-center flex flex-col gap-3">
-                        <div className="aspect-[9/16] bg-[#252525] rounded-lg overflow-hidden border border-[#333] shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all hover:border-red-600">
-                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/TeAx8n5atkA" title="Edição Dinâmica" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                <span className={`relative z-10 text-xs px-2 py-1 rounded bg-brand-secondary text-brand-text border border-brand-border transition-all duration-300 flex items-center gap-1 ${
+                  drawingsOpen ? "rotate-180 bg-brand-accent text-brand-bg border-transparent" : ""
+                }`}>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Instant fluid rendering grid */}
+              <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                drawingsOpen ? "max-h-[1200px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+              }`}>
+                <div className="grid grid-cols-3 gap-2.5 pt-1">
+                  {PORTFOLIO_ARTWORKS.map((art) => (
+                    <button
+                      key={art.id}
+                      onClick={() => setSelectedArtwork(art)}
+                      className="aspect-square rounded-xl overflow-hidden bg-brand-secondary border border-brand-border hover:border-brand-text relative group cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-text"
+                    >
+                      <div className={`w-full h-full bg-gradient-to-tr ${art.gradient} relative transition-opacity duration-200`}>
+                        <img
+                          src={art.image}
+                          alt={art.title}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-300"
+                        />
+
+                        <div className="absolute inset-0 bg-brand-text/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center p-2 text-center">
+                          <p className="font-cinzel text-[9px] font-extrabold text-brand-card uppercase tracking-wider truncate w-full">{art.title}</p>
+                          <p className="text-[8px] text-brand-card/70 truncate w-full mt-0.5">{art.category}</p>
                         </div>
-                        <p className="text-sm text-gray-400 font-medium px-1">Edição Dinâmica (Shorts)</p>
-                    </div>
-
-                    <div className="flex-none w-[75%] sm:w-auto snap-center flex flex-col gap-3">
-                        <div className="aspect-[9/16] bg-[#252525] rounded-lg overflow-hidden border border-[#333] shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all hover:border-red-600">
-                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/W8jEWcYiEas" title="Foco na marca" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                        </div>
-                        <p className="text-sm text-gray-400 font-medium px-1">Foco na marca</p>
-                    </div>
-
-                    <div className="flex-none w-[75%] sm:w-auto snap-center flex flex-col gap-3">
-                        <div className="aspect-[9/16] bg-[#252525] rounded-lg overflow-hidden border border-[#333] shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all hover:border-red-600">
-                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/PapLMtXJJhw" title="VSL" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                        </div>
-                        <p className="text-sm text-gray-400 font-medium px-1">VSL</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-20 pt-10 border-t border-[#333]">
-                <h3 className="text-2xl font-semibold text-white mb-6">
-                    Vamos trabalhar juntos?
-                </h3>
-                <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                    <a href="mailto:crishflycriatives@gmail.com" className="inline-flex items-center justify-center gap-2 bg-[#222] text-white border border-[#333] px-6 py-3 rounded-md font-medium transition-all duration-300 hover:bg-[#333] hover:border-red-600 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,0,0,0.2)] active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-red-500"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                        crishflycriatives@gmail.com
-                    </a>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <a href="https://www.instagram.com/crishfly?igsh=b3U0dmdjbjE3dWto" target="_blank" rel="noopener noreferrer" className="p-3 bg-[#222] border border-[#333] rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-[#333] hover:border-red-600 hover:scale-110 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(255,0,0,0.2)] active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-                    </a>
-                    <a href="https://youtube.com/@crishfly?si=c5z-oSr8YrPyq9Zp" target="_blank" rel="noopener noreferrer" className="p-3 bg-[#222] border border-[#333] rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-[#333] hover:border-red-600 hover:scale-110 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(255,0,0,0.2)] active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
-                    </a>
-                    <a href="https://www.tiktok.com/@crishfly?_r=1&_t=ZS-95HGEpf8sS4" target="_blank" rel="noopener noreferrer" className="p-3 bg-[#222] border border-[#333] rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-[#333] hover:border-red-600 hover:scale-110 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(255,0,0,0.2)] active:scale-95">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
-                    </a>
-                </div>
-            </div>
-          </main>
-        </div>
-      </div>
-
-      <div id="siteWrap">
-        <div className="container-main">
-
-          <div className="profile">
-            <div className="avatar-wrap">
-              <div className="avatar-ring">
-                <div className="avatar-inner">
-                  <img src={profileImg} alt="Crishfly" />
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-            <h1>Crishfly</h1>
-            <p className="tagline">arte &#8226; moda &#8226; conteúdo &#10022;</p>
-            <div className="badges">
-              <span className="badge badge-art">&#9999;&#65039; Artista</span>
-              <span className="badge badge-content">&#128242; Creator</span>
-              <span className="badge badge-fashion">&#128247; Moda</span>
-            </div>
-          </div>
 
-          <div className="section-label">Venha Produzir Comigo!</div>
-          <a href="https://crishflyrecruta.netlify.app/" className="link-card card-exclusive" style={{ borderLeftColor: '#6bcb77' }} onClick={(e) => handleExternalLink(e, "https://crishflyrecruta.netlify.app/")}>
-            <div className="card-icon icon-exclusive" style={{ background: 'rgba(107, 203, 119, 0.2)' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#6bcb77" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div className="card-info">
-              <div className="card-title" style={{ color: '#6bcb77' }}>Participe dos meus Vídeos!</div>
-              <div className="card-sub">Procuro Fandubbers, Editores e Artistas ✨</div>
-            </div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <div className="section-label">Redes Sociais</div>
-
-          <a href="https://www.instagram.com/crishfly?igsh=b3U0dmdjbjE3dWto" className="link-card card-insta" onClick={(e) => handleExternalLink(e, "https://www.instagram.com/crishfly?igsh=b3U0dmdjbjE3dWto")}>
-            <div className="card-icon icon-insta"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg></div>
-            <div className="card-info"><div className="card-title">Instagram</div><div className="card-sub">@crishfly</div></div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <a href="https://www.tiktok.com/@crishfly" className="link-card card-tiktok" onClick={(e) => handleExternalLink(e, "https://www.tiktok.com/@crishfly?_r=1&_t=ZS-94zekC2FemW")}>
-            <div className="card-icon icon-tiktok"><svg viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.17 8.17 0 004.77 1.52V6.76a4.85 4.85 0 01-1-.07z" /></svg></div>
-            <div className="card-info"><div className="card-title">TikTok</div><div className="card-sub">@crishfly</div></div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <a href="https://youtube.com/@crishfly" className="link-card card-youtube" onClick={(e) => handleExternalLink(e, "https://youtube.com/@crishfly?si=RAapc5TWZBrcoM3H")}>
-            <div className="card-icon icon-youtube"><svg viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg></div>
-            <div className="card-info"><div className="card-title">YouTube</div><div className="card-sub">Canal Crishfly</div></div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <a href="https://discord.gg/KxEYfFnpcW" className="link-card card-discord" onClick={(e) => handleExternalLink(e, "https://discord.gg/KxEYfFnpcW")}>
-            <div className="card-icon icon-discord"><svg viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028 14.09 14.09 0 001.226-1.994.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" /></svg></div>
-            <div className="card-info"><div className="card-title">Discord</div><div className="card-sub">Entra na comunidade!</div></div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <div className="section-label">Portfólio & Desenhos</div>
-
-          <a href="#" className="link-card card-portfolio-btn" onClick={openPortfolio}>
-            <div className="card-icon icon-portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="#c77dff" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg></div>
-            <div className="card-info">
-              <div className="card-title" style={{ background: 'linear-gradient(135deg,#c77dff,#4d96ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Meu Portfólio</div>
-              <div className="card-sub">Ver meu portfólio completo ✨</div>
-            </div>
-            <span className="card-arrow" style={{ color: '#c77dff' }}>&#8594;</span>
-          </a>
-
-          <button className={`drawings-btn ${drawingsOpen ? 'open' : ''}`} onClick={() => setDrawingsOpen(!drawingsOpen)}>
-            <div className="db-icon">&#127912;</div>
-            <div className="db-info"><div className="db-title">Meus Desenhos & Arte</div><div className="db-sub">Toque para ver todas as criações ✨</div></div>
-            <span className="db-arrow">&#8250;</span>
-          </button>
-
-          <div className={`drawings-panel ${drawingsOpen ? 'open' : ''}`}>
-            <a href="https://pin.it/3QqCs85Fo" target="_blank" rel="noreferrer" className="cta-banner">
-              <div className="cta-icon">&#128204;</div>
-              <div className="cta-text"><strong>Ver todos no Pinterest &#8594;</strong><span>Arte original • Personagens • Ilustrações</span></div>
-            </a>
-            <div className="gallery-grid">
-              {galleryImgs.map((img, i) => (
-                <div className="gallery-item" key={i} onClick={() => setLightboxIndex(i)}>
-                  <img src={img} alt={`Arte ${i + 1}`} loading="lazy" />
-                  <div className="overlay"><span className="overlay-icon">&#128269;</span></div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="section-label">Apoio & Loja</div>
-
-          <a href="https://www.vakinha.com.br/vaquinha/notebook-para-trabalhar-deficiente" className="link-card card-vakinha" style={{ borderLeftColor: '#f59e0b' }} onClick={(e) => handleExternalLink(e, "https://www.vakinha.com.br/vaquinha/notebook-para-trabalhar-deficiente")}>
-            <div className="card-icon icon-vakinha" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-            </div>
-            <div className="card-info">
-              <div className="card-title" style={{ color: '#f59e0b', fontSize: '1.05rem' }}>Meu 1º PCzinho de Edição! 🥺💻</div>
-              <div className="card-sub">Me dá essa forcinha na Vakinha? Cada centavo ajuda a realizar meu sonhozinho de trabalhar! ✨💖</div>
-            </div>
-            <span className="card-arrow" style={{ color: '#f59e0b' }}>&#8594;</span>
-          </a>
-
-          <a href="https://umapenca.com/crishfly/" className="link-card card-loja" onClick={(e) => handleExternalLink(e, "https://umapenca.com/crishfly/")}>
-            <div className="card-icon icon-loja"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd93d" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg></div>
-            <div className="card-info"><div className="card-title">Loja de Roupas</div><div className="card-sub">Confira os meus lançamentos ✨</div></div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-          
-          <a href="https://livepix.gg/crishfly" className="link-card card-pix" onClick={(e) => handleExternalLink(e, "https://livepix.gg/crishfly")}>
-            <div className="card-icon icon-pix"><svg viewBox="0 0 24 24" fill="none" stroke="#00b4d8" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg></div>
-            <div className="card-info"><div className="card-title">Live Pix <span className="live-badge">LIVE</span></div><div className="card-sub">Manda comentário ou dúvida!</div></div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-          
-          <a href="#" className="link-card card-exclusive" onClick={(e) => { e.preventDefault(); setPollModalOpen(true); }}>
-            <div className="card-icon icon-exclusive"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg></div>
-            <div className="card-info">
-              <div className="card-title" style={{ background: 'linear-gradient(135deg,var(--c1),var(--c5))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Conteúdo Exclusivo &#10022;</div>
-              <div className="card-sub">Área especial para apoiadores &#128064;</div>
-            </div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <footer><p>feito com &#128156; por <span>Crishfly</span></p></footer>
-        </div>
-      </div>
-
-      {pollState === 'answered' && (
-        <div className="fixed inset-0 min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden font-sans text-center" style={{ zIndex: 9999 }}>
-          <Confetti width={windowSize.width} height={windowSize.height} />
-          
-          <div className="absolute inset-0 pointer-events-none perspective-[1200px] flex items-center justify-center">
-            <div className="w-[80vmin] h-[80vmin] border-[8px] border-pink-500 rounded-full animate-[spin_4s_linear_infinite] absolute mix-blend-screen opacity-70" style={{ transformStyle: 'preserve-3d', transform: 'rotateX(60deg)' }}></div>
-            <div className="w-[100vmin] h-[100vmin] border-[8px] border-cyan-500 animate-[spin_5s_linear_infinite_reverse] absolute mix-blend-screen opacity-70" style={{ transformStyle: 'preserve-3d', transform: 'rotateY(70deg) rotateZ(20deg)' }}></div>
-            <div className="w-[60vmin] h-[60vmin] border-[8px] border-yellow-500 rounded-lg animate-[spin_3s_linear_infinite] absolute mix-blend-screen opacity-70" style={{ transformStyle: 'preserve-3d', transform: 'rotateX(30deg) rotateY(40deg)' }}></div>
-          </div>
-
-          <div className="text-5xl md:text-8xl lg:text-9xl mb-6 z-10 animate-[bounce_2s_ease-in-out_infinite]">
-            🥺🐰💖
-          </div>
-
-          <h1 className="text-4xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 to-pink-500 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] z-10 p-4 px-8 leading-tight" style={{ WebkitTextStroke: '2px white' }}>
-            POR FAVORZINHO, NÃO ME COMA!
-          </h1>
-          
-          <p className="text-xl md:text-3xl lg:text-4xl text-white font-bold z-10 mt-4 drop-shadow-[0_0_10px_rgba(255,105,180,0.8)] animate-pulse px-6">
-            Eu sou muito pequenininha e docinha pra virar lanchinho! 😭🍓🎀
-          </p>
-
-          <a href="https://www.vakinha.com.br/vaquinha/notebook-para-trabalhar-deficiente" target="_blank" rel="noreferrer" className="mt-8 px-6 py-3 md:px-8 md:py-4 md:text-xl bg-orange-500 font-bold text-white rounded-full hover:bg-orange-600 transition z-20 cursor-pointer shadow-[0_0_20px_rgba(255,165,0,0.8)] border-2 border-white/50 flex flex-col items-center">
-            <span>Se você não me comer e for uma pessoa muito boazinha... 🥺</span>
-            <span className="text-sm md:text-base opacity-90 mt-1">Me ajuda com uma doaçãozinha linda na minha vakinha? 🐮💖✨</span>
-          </a>
-          
-          <button className="mt-4 px-6 py-3 md:px-8 md:py-4 md:text-xl bg-pink-500 font-bold text-white rounded-full hover:bg-pink-600 transition z-20 cursor-pointer shadow-[0_0_20px_rgba(255,105,180,0.8)] border-2 border-white/50" onClick={() => setPollState('idle')}>Vou ser bonzinha e te perdoarzinho 🌸</button>
-        </div>
-      )}
-
-      {/* Musiquinha de Fundo */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center justify-center gap-3">
-        {musicMuted && (
-          <div className="bg-white/90 text-pink-600 px-3 md:px-4 py-2 rounded-2xl text-xs md:text-sm font-bold shadow-[0_0_15px_rgba(255,105,180,0.6)] animate-bounce max-w-[150px] md:max-w-none text-center cursor-pointer pointer-events-auto" onClick={() => setMusicMuted(false)}>
-            Clica aqui pra ouvir uma musiquinha! 🥺🎶
           </div>
         )}
 
-        <button
-          onClick={() => setMusicMuted(!musicMuted)}
-          className={`group flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all duration-300 backdrop-blur-md overflow-hidden ${
-            musicMuted 
-              ? 'bg-black/80 border-gray-500 shadow-[0_0_10px_rgba(156,163,175,0.5)]' 
-              : 'bg-black/60 border-pink-500 shadow-[0_0_15px_#ff00ff,inset_0_0_10px_#ff00ff] hover:shadow-[0_0_25px_#ff00ff,inset_0_0_15px_#ff00ff]'
-          }`}
-          title={musicMuted ? "Desmutar musiquinha" : "Mutar musiquinha"}
-        >
-          <span className={`text-xl md:text-2xl transition-all duration-300 ${!musicMuted ? 'animate-pulse drop-shadow-[0_0_8px_#ff00ff]' : 'grayscale opacity-60'}`}>
-            {musicMuted ? '🔇' : '🎵'}
-          </span>
-          
-          {/* Neon Glow Rings */}
-          {!musicMuted && (
-            <>
-              <div className="absolute inset-0 rounded-full border border-pink-400 opacity-50 animate-[ping_2s_ease-out_infinite]"></div>
-              <div className="absolute inset-0 rounded-full border border-purple-500 opacity-30 animate-[ping_3s_ease-out_infinite_animation-delay-500ms]"></div>
-            </>
-          )}
-        </button>
-      </div>
+        {/* ======================================================== */}
+        {/* VIEW 2: PORTFOLIO SHOWCASE                               */}
+        {/* ======================================================== */}
+        {activeTab === "portfolio" && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Back transition button */}
+            <button 
+              onClick={() => setActiveTab("links")}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-card border border-brand-border hover:border-brand-text rounded-full text-xs font-cinzel font-extrabold text-brand-text transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> {APP_CONFIG.ui.backToLinksBtn}
+            </button>
 
-      {!musicMuted && (
-        <div className="fixed top-[-1000px] left-[-1000px] w-[10px] h-[10px] pointer-events-none z-[-999]" style={{ opacity: 0.001 }}>
-          <iframe
-            width="100%"
-            height="100%"
-            src="https://www.youtube-nocookie.com/embed/RdP9PWm9pRo?autoplay=1&loop=1&playlist=RdP9PWm9pRo&controls=0&mute=0"
-            title="Music Player"
-            allow="autoplay; encrypted-media"
-            frameBorder="0"
+            {/* Intro layout */}
+            <div className="space-y-3 text-left">
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] tracking-[0.2em] uppercase px-2.5 py-1 bg-brand-accent text-brand-bg rounded-full font-extrabold font-cinzel">{APP_CONFIG.ui.portfolioSectionBadge}</span>
+                <span className="gothic-rule" />
+              </div>
+              <h2 className="font-gothic text-4xl text-brand-text glow-pink">
+                {APP_CONFIG.ui.portfolioSectionTitle}
+              </h2>
+              <p className="text-xs text-brand-muted font-light max-w-lg leading-relaxed">
+                {APP_CONFIG.ui.portfolioSectionSubtext}
+              </p>
+            </div>
+
+            {/* List of cards */}
+            <div className="space-y-6 text-left">
+              {PORTFOLIO_ARTWORKS.slice(0, 4).map((art, index) => (
+                <ArtworkCard 
+                  key={art.id} 
+                  artwork={art} 
+                  index={index} 
+                  onSelect={setSelectedArtwork} 
+                />
+              ))}
+            </div>
+
+            {/* Aesthetic Stats block */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="goth-corners bg-brand-card p-4 border border-brand-border rounded-xl text-center space-y-1">
+                <p className="font-cinzel text-lg font-extrabold text-brand-accent">120+</p>
+                <p className="text-[9px] text-brand-muted uppercase tracking-wider font-mono">{APP_CONFIG.ui.illustrationsStat}</p>
+              </div>
+              <div className="goth-corners bg-brand-card p-4 border border-brand-border rounded-xl text-center space-y-1">
+                <p className="font-cinzel text-lg font-extrabold text-brand-purple">30+</p>
+                <p className="text-[9px] text-brand-muted uppercase tracking-wider font-mono">{APP_CONFIG.ui.sketchesStat}</p>
+              </div>
+              <div className="goth-corners bg-brand-card p-4 border border-brand-border rounded-xl text-center space-y-1">
+                <p className="font-cinzel text-lg font-extrabold text-brand-accent">100%</p>
+                <p className="text-[9px] text-brand-muted uppercase tracking-wider font-mono">{APP_CONFIG.ui.originalStat}</p>
+              </div>
+            </div>
+
+            {/* Direct contact footer collaboration banner */}
+            <div className="p-6 rounded-xl space-y-4 text-center text-brand-bg relative overflow-hidden bg-gradient-to-br from-brand-purple to-brand-accent">
+              <div className="inline-flex p-2.5 bg-black/15 text-brand-bg rounded-lg">
+                <Send className="w-4 h-4" />
+              </div>
+              <div className="space-y-1 max-w-sm mx-auto">
+                <h3 className="font-pirata text-base tracking-wide text-brand-bg">{APP_CONFIG.ui.partnershipTitle}</h3>
+                <p className="text-[11px] text-brand-bg/75 font-light leading-relaxed">
+                  {APP_CONFIG.ui.partnershipSubtext}
+                </p>
+              </div>
+              <div>
+                <a
+                  href={`mailto:${APP_CONFIG.contactEmail}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-bg text-brand-accent hover:bg-brand-secondary rounded-lg font-cinzel font-extrabold text-xs active:scale-95 transition-all shadow-md"
+                >
+                  {APP_CONFIG.ui.partnershipBtn} <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modularized Footer */}
+        <Footer />
+
+      </main>
+
+      {/* ======================================================== */}
+      {/* MODAL WINDOWS & LIGHTBOX                                 */}
+      {/* ======================================================== */}
+      
+      {/* Pix modal supporting helper */}
+      <Modal 
+        isOpen={pixModalOpen} 
+        onClose={() => setPixModalOpen(false)}
+        title={APP_CONFIG.ui.pixModalTitle}
+        borderColorClass="border-brand-border"
+        shadowColorClass="shadow-md"
+        icon={<Zap className="w-5 h-5 text-brand-text" />}
+      >
+        <p className="text-xs text-brand-muted font-light max-w-xs mx-auto leading-relaxed">
+          {APP_CONFIG.ui.pixModalSubtext}
+        </p>
+
+        <div className="p-3 bg-brand-secondary border border-brand-border rounded-lg flex items-center justify-between gap-3 text-left">
+          <div className="min-w-0">
+            <span className="text-[9px] uppercase text-brand-muted tracking-wider font-mono block">{APP_CONFIG.ui.pixKeyLabel}</span>
+            <p className="text-xs text-brand-text font-mono font-medium truncate">{APP_CONFIG.pixKey}</p>
+          </div>
+          
+          <button 
+            onClick={handleCopyPix}
+            className={`p-2 rounded-md shrink-0 transition-all cursor-pointer border ${
+              copiedPix 
+                ? "bg-brand-text text-brand-card border-transparent" 
+                : "bg-brand-card hover:bg-brand-secondary text-brand-text border-brand-border"
+            }`}
+            title="Copiar chave"
+          >
+            {copiedPix ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {copiedPix && (
+          <p className="text-[10px] text-brand-text font-extrabold font-cinzel uppercase tracking-wider pt-1 animate-pulse">
+            {APP_CONFIG.ui.pixCopiedMessage}
+          </p>
+        )}
+      </Modal>
+
+      {/* Exclusive membership modal helper */}
+      <Modal 
+        isOpen={exclusiveModalOpen} 
+        onClose={() => setExclusiveModalOpen(false)}
+        title={APP_CONFIG.ui.membersModalTitle}
+        borderColorClass="border-brand-border"
+        shadowColorClass="shadow-md"
+        icon={<Sparkles className="w-5 h-5 text-brand-text" />}
+      >
+        <p className="text-xs text-brand-muted font-light leading-relaxed max-w-xs mx-auto">
+          {APP_CONFIG.ui.membersModalSubtext}
+        </p>
+
+        <ul className="text-left bg-brand-secondary p-4 border border-brand-border rounded-lg space-y-2.5 text-xs text-brand-text font-light">
+          {APP_CONFIG.ui.membershipBenefits.map((benefit) => (
+            <li key={benefit} className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-accent" />
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="pt-2">
+          <a
+            href="https://apoia.se"
+            target="_blank"
+            rel="noreferrer"
+            className="w-full py-3 rounded-lg bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 text-xs font-cinzel font-extrabold text-brand-bg block transition-all shadow-md text-center"
+          >
+            {APP_CONFIG.ui.membershipBtnLabel}
+          </a>
+        </div>
+      </Modal>
+
+      {/* Lightbox details viewer */}
+      {selectedArtwork && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 animate-fade-in">
+          <button 
+            onClick={() => setSelectedArtwork(null)}
+            className="absolute inset-0 bg-brand-text/60 backdrop-blur-md cursor-default"
           />
+
+          <div className="goth-corners relative bg-brand-card border border-brand-border rounded-2xl overflow-hidden max-w-sm w-full p-6 space-y-5 shadow-lg">
+            <button 
+              onClick={() => setSelectedArtwork(null)}
+              className="absolute top-4 right-4 text-brand-muted hover:text-brand-text p-1.5 hover:bg-brand-secondary rounded-full transition-colors z-10 cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Vector frame preview */}
+            <div className="aspect-square rounded-xl overflow-hidden bg-brand-secondary relative flex items-center justify-center border border-brand-border">
+              <div className={`absolute inset-0 bg-gradient-to-tr ${selectedArtwork.gradient}`} />
+              <img
+                src={selectedArtwork.image}
+                alt={selectedArtwork.title}
+                className="w-full h-full object-cover relative z-10"
+              />
+            </div>
+
+            {/* Interactive context */}
+            <div className="space-y-2 text-left">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-brand-accent tracking-wider font-cinzel">
+                  {selectedArtwork.category}
+                </span>
+                <span className="text-[10px] text-brand-muted font-mono">Obra #0{selectedArtwork.id}</span>
+              </div>
+              <h3 className="font-gothic text-2xl text-brand-text glow-pink">
+                {selectedArtwork.title}
+              </h3>
+              <p className="text-xs text-brand-muted font-light leading-relaxed">
+                {selectedArtwork.description}
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 pt-1">
+              <a
+                href={`mailto:${APP_CONFIG.contactEmail}?subject=Interesse em Comissão`}
+                className="flex-1 py-3 bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 text-brand-bg border border-transparent rounded-lg text-xs font-cinzel font-extrabold text-center transition-all active:scale-[0.98] shadow-sm"
+              >
+                {APP_CONFIG.ui.lightboxCommissionBtn}
+              </a>
+              <button 
+                onClick={() => setSelectedArtwork(null)}
+                className="px-5 py-3 bg-brand-secondary hover:bg-brand-border text-xs font-cinzel font-extrabold text-brand-text rounded-lg transition-all cursor-pointer border border-brand-border"
+              >
+                {APP_CONFIG.ui.lightboxBackBtn}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </>
+
+    </div>
   );
 }
+

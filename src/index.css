@@ -11,10 +11,10 @@
   --c3: #6bcb77;
   --c4: #4d96ff;
   --c5: #c77dff;
-  --bg: #0d0d0d;
-  --card: #161616;
+  --bg: #120904;
+  --card: #181210;
   --text: #f0f0f0;
-  --muted: #888;
+  --muted: #a39288;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,7 +27,7 @@ body {
   min-height: 100vh;
 }
 
-#waterBg { position: fixed; inset: 0; z-index: 0; }
+#waterBg { position: fixed; inset: 0; z-index: 0; opacity: 1; }
 #waterBg canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 #introCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 50; pointer-events: none; }
 #irisCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 500; pointer-events: none; display: none; }
@@ -65,11 +65,11 @@ body {
 }
 
 .bg-blobs { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
-.blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.08; animation: blobFloat 9s ease-in-out infinite; }
-.blob-1 { width: 500px; height: 500px; background: #7b2fff; top: -150px; left: -150px; }
-.blob-2 { width: 400px; height: 400px; background: #00f5ff; top: 30%; right: -100px; animation-delay: 3s; }
-.blob-3 { width: 350px; height: 350px; background: #ff00c8; bottom: 5%; left: 10%; animation-delay: 5s; }
-.blob-4 { width: 300px; height: 300px; background: #0044ff; bottom: -100px; right: 5%; animation-delay: 1.5s; }
+.blob { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; animation: blobFloat 12s ease-in-out infinite; }
+.blob-1 { width: 550px; height: 550px; background: #ff7700; top: -100px; left: 10%; }
+.blob-2 { width: 450px; height: 450px; background: #ffaa00; top: 15%; right: -50px; animation-delay: 3s; }
+.blob-3 { width: 400px; height: 400px; background: #9d174d; bottom: 15%; left: 5%; animation-delay: 5s; }
+.blob-4 { width: 350px; height: 350px; background: #701a75; bottom: -50px; right: 10%; animation-delay: 2s; }
 @keyframes blobFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-25px) scale(1.04); } }
 
 .profile { 

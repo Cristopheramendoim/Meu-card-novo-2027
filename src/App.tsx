@@ -169,7 +169,7 @@ export default function App() {
     });
   };
 
-  // Water Background logic
+  // Solar & Synthwave Wave Background logic
   useEffect(() => {
     const canvas = waterBgRef.current;
     if (!canvas) return;
@@ -185,52 +185,289 @@ export default function App() {
     }
     resize();
     window.addEventListener('resize', resize);
-    const layers = [
-      { amp: 18, freq: 0.008, speed: 0.6, yBase: 0.55, color: 'rgba(120,0,255,0.18)', lw: 2 },
-      { amp: 14, freq: 0.012, speed: 0.9, yBase: 0.60, color: 'rgba(0,200,255,0.14)', lw: 1.5 },
-      { amp: 22, freq: 0.006, speed: 0.4, yBase: 0.65, color: 'rgba(160,0,255,0.20)', lw: 2.5 },
-      { amp: 10, freq: 0.018, speed: 1.2, yBase: 0.70, color: 'rgba(0,150,255,0.12)', lw: 1 },
-      { amp: 28, freq: 0.005, speed: 0.3, yBase: 0.75, color: 'rgba(200,0,255,0.15)', lw: 3 },
-      { amp: 8, freq: 0.025, speed: 1.8, yBase: 0.80, color: 'rgba(80,0,200,0.10)', lw: 1 },
+
+    const waveLayers = [
+      { amp: 18, freq: 0.004, speed: 0.25, yBase: 0.48, color: 'rgba(56, 16, 32, 0.90)', stroke: 'rgba(251, 146, 60, 0.95)', lw: 2.5 },
+      { amp: 22, freq: 0.006, speed: 0.38, yBase: 0.54, color: 'rgba(48, 12, 42, 0.92)', stroke: 'rgba(232, 121, 249, 0.90)', lw: 2.8 },
+      { amp: 16, freq: 0.010, speed: 0.55, yBase: 0.60, color: 'rgba(20, 24, 52, 0.94)', stroke: 'rgba(56, 189, 248, 0.85)', lw: 2.0 },
+      { amp: 26, freq: 0.0035, speed: 0.22, yBase: 0.66, color: 'rgba(38, 10, 48, 0.95)', stroke: 'rgba(192, 132, 252, 0.90)', lw: 3.0 },
+      { amp: 20, freq: 0.008, speed: 0.45, yBase: 0.73, color: 'rgba(28, 8, 38, 0.97)', stroke: 'rgba(168, 85, 247, 0.80)', lw: 2.2 },
+      { amp: 24, freq: 0.005, speed: 0.30, yBase: 0.80, color: 'rgba(18, 5, 28, 0.98)', stroke: 'rgba(147, 51, 234, 0.70)', lw: 2.2 },
+      { amp: 14, freq: 0.014, speed: 0.65, yBase: 0.87, color: 'rgba(10, 3, 18, 0.99)', stroke: 'rgba(120, 30, 160, 0.60)', lw: 1.8 },
     ];
-    function draw(t: number) {
-      if(!ctx) return;
-      ctx.clearRect(0, 0, W, H);
-      const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#05001a'); bg.addColorStop(0.5, '#0a0022'); bg.addColorStop(1, '#000010');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-      layers.forEach(l => {
-        const yMid = H * l.yBase;
-        ctx.save(); ctx.shadowColor = l.color; ctx.shadowBlur = 20;
-        ctx.beginPath(); ctx.moveTo(0, yMid);
-        for (let x = 0; x <= W; x += 2) {
-          const y = yMid + Math.sin(x * l.freq + t * l.speed) * l.amp + Math.sin(x * l.freq * 1.6 + t * l.speed * 0.7) * l.amp * 0.4;
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-        const wg = ctx.createLinearGradient(0, yMid - l.amp, 0, yMid + l.amp + 60);
-        wg.addColorStop(0, l.color); wg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = wg; ctx.fill(); ctx.restore();
-        ctx.save(); ctx.shadowColor = l.color; ctx.shadowBlur = 8;
-        ctx.beginPath(); ctx.moveTo(0, yMid);
-        for (let x = 0; x <= W; x += 2) {
-          const y = yMid + Math.sin(x * l.freq + t * l.speed) * l.amp + Math.sin(x * l.freq * 1.6 + t * l.speed * 0.7) * l.amp * 0.4;
-          ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = l.color.replace(',0.', ',0.5'); ctx.lineWidth = l.lw; ctx.stroke(); ctx.restore();
+
+    // Distant mountain seed points for deterministic rendering
+    const mountainPeaks1 = [
+      { x: 0, y: 0.40 },
+      { x: 0.08, y: 0.34 },
+      { x: 0.16, y: 0.38 },
+      { x: 0.25, y: 0.32 },
+      { x: 0.35, y: 0.39 },
+      { x: 0.45, y: 0.30 },
+      { x: 0.55, y: 0.37 },
+      { x: 0.65, y: 0.31 },
+      { x: 0.76, y: 0.38 },
+      { x: 0.86, y: 0.33 },
+      { x: 0.94, y: 0.37 },
+      { x: 1.0, y: 0.35 }
+    ];
+
+    const mountainPeaks2 = [
+      { x: 0, y: 0.44 },
+      { x: 0.11, y: 0.39 },
+      { x: 0.20, y: 0.45 },
+      { x: 0.30, y: 0.38 },
+      { x: 0.40, y: 0.43 },
+      { x: 0.50, y: 0.36 },
+      { x: 0.62, y: 0.44 },
+      { x: 0.72, y: 0.37 },
+      { x: 0.82, y: 0.43 },
+      { x: 0.91, y: 0.38 },
+      { x: 1.0, y: 0.42 }
+    ];
+
+    // Ember particles
+    const embers: Array<{ x: number; y: number; size: number; speedY: number; speedX: number; opacity: number; color: string }> = [];
+    for (let i = 0; i < 30; i++) {
+      embers.push({
+        x: Math.random() * (window.innerWidth || 1000),
+        y: Math.random() * (window.innerHeight || 800),
+        size: Math.random() * 1.8 + 0.6,
+        speedY: Math.random() * 0.35 + 0.15,
+        speedX: (Math.random() - 0.5) * 0.25,
+        opacity: Math.random() * 0.45 + 0.2,
+        color: Math.random() > 0.4 ? '#f59e0b' : '#ec4899',
       });
-      if (Math.random() < 0.15) {
-        const sx = Math.random() * W, waveY = H * 0.65 + Math.sin(sx * 0.006 + t * 0.4) * 22;
-        ctx.save(); ctx.shadowColor = '#c77dff'; ctx.shadowBlur = 14;
-        ctx.beginPath(); ctx.arc(sx, waveY, 1.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(200,120,255,0.8)'; ctx.fill(); ctx.restore();
-      }
     }
+
+    function draw(t: number) {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Sky Ambient Gradient
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#150903');
+      bg.addColorStop(0.32, '#230e04');
+      bg.addColorStop(0.58, '#140510');
+      bg.addColorStop(0.85, '#09020d');
+      bg.addColorStop(1, '#040106');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Calculate avatar/sun position
+      let sunX = W / 2;
+      let sunY = Math.min(H * 0.22, 175);
+      const avatarEl = document.querySelector('.avatar-wrap');
+      if (avatarEl) {
+        const rect = avatarEl.getBoundingClientRect();
+        if (rect.top > -100 && rect.top < H) {
+          sunY = rect.top + rect.height / 2;
+          sunX = rect.left + rect.width / 2;
+        }
+      }
+
+      // 2. Large Solar Ambient Glow
+      const ambientGlow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, Math.max(W * 0.45, 360));
+      ambientGlow.addColorStop(0, 'rgba(255, 175, 45, 0.30)');
+      ambientGlow.addColorStop(0.35, 'rgba(235, 95, 20, 0.15)');
+      ambientGlow.addColorStop(0.70, 'rgba(180, 45, 10, 0.05)');
+      ambientGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = ambientGlow;
+      ctx.fillRect(0, 0, W, H);
+
+      // 3. Central Sun Disc
+      const sunR = Math.min(W * 0.20, 135);
+      const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunR);
+      sunGrad.addColorStop(0, 'rgba(255, 245, 160, 0.75)');
+      sunGrad.addColorStop(0.28, 'rgba(255, 185, 40, 0.70)');
+      sunGrad.addColorStop(0.60, 'rgba(245, 110, 20, 0.52)');
+      sunGrad.addColorStop(0.88, 'rgba(215, 60, 15, 0.22)');
+      sunGrad.addColorStop(1, 'rgba(180, 40, 10, 0)');
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+      ctx.fillStyle = sunGrad;
+      ctx.shadowColor = 'rgba(249, 115, 22, 0.55)';
+      ctx.shadowBlur = 25;
+      ctx.fill();
+      ctx.restore();
+
+      // 4. Concentric Segmented Solar Arches / Rings (Halo Emblem)
+      const ringRadii = [
+        sunR + 24,
+        sunR + 52,
+        sunR + 80,
+        sunR + 108
+      ];
+
+      // Segment angles in radians (forming segmented arcs with clean slit gaps)
+      const segments = [
+        { start: -Math.PI * 0.92, end: -Math.PI * 0.58 },
+        { start: -Math.PI * 0.42, end: -Math.PI * 0.08 },
+        { start: Math.PI * 0.08, end: Math.PI * 0.42 },
+        { start: Math.PI * 0.58, end: Math.PI * 0.92 }
+      ];
+
+      ringRadii.forEach((r, idx) => {
+        const ringLw = Math.max(6, 10 - idx * 1.5);
+        ctx.save();
+        ctx.lineWidth = ringLw;
+        ctx.shadowColor = 'rgba(249, 115, 22, 0.50)';
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = idx % 2 === 0 ? 'rgba(245, 158, 11, 0.55)' : 'rgba(234, 88, 12, 0.50)';
+        
+        segments.forEach(seg => {
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, r, seg.start, seg.end);
+          ctx.stroke();
+        });
+        ctx.restore();
+      });
+
+      // 5. Floating Embers
+      embers.forEach(ember => {
+        ember.y -= ember.speedY;
+        ember.x += ember.speedX;
+        if (ember.y < -10) {
+          ember.y = H + 10;
+          ember.x = Math.random() * W;
+        }
+        ctx.save();
+        ctx.globalAlpha = ember.opacity;
+        ctx.shadowColor = ember.color;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = ember.color;
+        ctx.beginPath();
+        ctx.arc(ember.x, ember.y, ember.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // 6. Mountain Ranges (Montanhas Distantes e Médias com preenchimento sólido e bordas iluminadas)
+      function drawMountainRange(
+        peaks: Array<{ x: number; y: number }>,
+        fillTop: string,
+        fillBottom: string,
+        rimColor: string,
+        rimWidth: number,
+        glowBlur: number
+      ) {
+        if (!ctx) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, H);
+        ctx.lineTo(0, peaks[0].y * H);
+
+        for (let i = 0; i < peaks.length - 1; i++) {
+          const p1 = peaks[i];
+          const p2 = peaks[i + 1];
+          const cpX = (p1.x + p2.x) / 2 * W;
+          const cpY = (p1.y + p2.y) / 2 * H;
+          ctx.quadraticCurveTo(p1.x * W, p1.y * H, cpX, cpY);
+        }
+        const lastP = peaks[peaks.length - 1];
+        ctx.lineTo(lastP.x * W, lastP.y * H);
+        ctx.lineTo(W, H);
+        ctx.closePath();
+
+        const grad = ctx.createLinearGradient(0, peaks[0].y * H, 0, H);
+        grad.addColorStop(0, fillTop);
+        grad.addColorStop(1, fillBottom);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Mountain glowing rim
+        ctx.shadowColor = rimColor;
+        ctx.shadowBlur = glowBlur;
+        ctx.strokeStyle = rimColor;
+        ctx.lineWidth = rimWidth;
+        ctx.beginPath();
+        ctx.moveTo(0, peaks[0].y * H);
+        for (let i = 0; i < peaks.length - 1; i++) {
+          const p1 = peaks[i];
+          const p2 = peaks[i + 1];
+          const cpX = (p1.x + p2.x) / 2 * W;
+          const cpY = (p1.y + p2.y) / 2 * H;
+          ctx.quadraticCurveTo(p1.x * W, p1.y * H, cpX, cpY);
+        }
+        ctx.lineTo(lastP.x * W, lastP.y * H);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Draw Range 1 (Back Mountains)
+      drawMountainRange(
+        mountainPeaks1,
+        'rgba(40, 14, 28, 0.95)',
+        'rgba(18, 5, 20, 0.98)',
+        'rgba(249, 115, 22, 0.85)',
+        2.2,
+        14
+      );
+
+      // Draw Range 2 (Mid Mountains)
+      drawMountainRange(
+        mountainPeaks2,
+        'rgba(48, 12, 40, 0.96)',
+        'rgba(14, 4, 18, 0.99)',
+        'rgba(236, 72, 153, 0.85)',
+        2.5,
+        16
+      );
+
+      // 7. Mountain Ridges & Contour Waves (Synthwave Topographic Horizon)
+      waveLayers.forEach(l => {
+        const yMid = H * l.yBase;
+        
+        // Filled gradient area under wave
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, yMid);
+        for (let x = 0; x <= W; x += 3) {
+          const y = yMid + Math.sin(x * l.freq + t * l.speed) * l.amp + Math.sin(x * l.freq * 1.6 + t * l.speed * 0.6) * (l.amp * 0.4);
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W, H);
+        ctx.lineTo(0, H);
+        ctx.closePath();
+
+        const wg = ctx.createLinearGradient(0, yMid - l.amp, 0, yMid + l.amp + 120);
+        wg.addColorStop(0, l.color);
+        wg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = wg;
+        ctx.fill();
+        ctx.restore();
+
+        // Glowing Wave Contour Line (Crest)
+        ctx.save();
+        ctx.shadowColor = l.stroke;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.moveTo(0, yMid);
+        for (let x = 0; x <= W; x += 3) {
+          const y = yMid + Math.sin(x * l.freq + t * l.speed) * l.amp + Math.sin(x * l.freq * 1.6 + t * l.speed * 0.6) * (l.amp * 0.4);
+          ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = l.stroke;
+        ctx.lineWidth = l.lw;
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
     let t = 0;
     function loop() {
-      t += 0.016; draw(t); animationId = requestAnimationFrame(loop);
+      t += 0.016;
+      draw(t);
+      animationId = requestAnimationFrame(loop);
     }
     loop();
-    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationId); };
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationId);
+    };
   }, []);
 
   // Intro Canvas logic

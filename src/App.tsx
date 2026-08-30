@@ -1,15 +1,37 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Confetti from 'react-confetti';
+import { Building2, Clapperboard, Palette, Sparkles, Paintbrush } from 'lucide-react';
+import { ServicesSection } from './components/ServicesSection';
 
 export default function App() {
   const [portfolioOpen, setPortfolioOpen] = useState(false);
   const [drawingsOpen, setDrawingsOpen] = useState(false);
+  const [openServiceCategory, setOpenServiceCategory] = useState<'mei' | 'video' | 'art' | null>(null);
+  const [selectedService, setSelectedService] = useState<{ title: string; price?: string; desc: string; category: string } | null>(null);
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
   const [pollModalOpen, setPollModalOpen] = useState(false);
   const [pollStep, setPollStep] = useState(1);
   const [pollState, setPollState] = useState<'idle' | 'answered'>('idle');
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [musicMuted, setMusicMuted] = useState(true);
+  const [copiedDiscord, setCopiedDiscord] = useState(false);
+
+  const contactEmail = "crishflycriatives@gmail.com";
+  const discordLink = "https://discord.gg/KxEYfFnpcW";
+  const discordTag = "walgny";
+  const discordDisplayName = "Skymira";
+
+  const copyDiscordTag = () => {
+    navigator.clipboard.writeText(discordTag);
+    setCopiedDiscord(true);
+    setTimeout(() => setCopiedDiscord(false), 2500);
+  };
+
+  const handleServiceInquiry = (service: { title: string; price?: string; desc: string; category: string }) => {
+    setSelectedService(service);
+    setServiceModalOpen(true);
+  };
 
   useEffect(() => {
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -298,6 +320,131 @@ export default function App() {
         </div>
       )}
 
+      {/* MODAL DE DETALHES E SOLICITAÇÃO DE SERVIÇO */}
+      {serviceModalOpen && selectedService && (
+        <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) setServiceModalOpen(false); }}>
+          <div 
+            className="w-[94%] max-w-md mx-auto p-5 sm:p-6 rounded-2xl text-left border border-zinc-800 shadow-2xl relative animate-fadeIn max-h-[90vh] overflow-y-auto bg-black"
+            style={{ 
+              boxShadow: '0 25px 70px rgba(0, 0, 0, 0.95), 0 0 25px rgba(232, 37, 109, 0.2)'
+            }}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3 text-left">
+              <div className="text-left">
+                <span className="inline-block text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-zinc-900 text-white border border-zinc-700 mb-2 font-sans">
+                  {selectedService.category}
+                </span>
+                <h2 className="text-lg sm:text-2xl font-bold text-white font-['Syne'] leading-snug text-left">
+                  {selectedService.title}
+                </h2>
+              </div>
+              <button 
+                onClick={() => setServiceModalOpen(false)}
+                className="text-gray-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-full w-8 h-8 flex items-center justify-center transition-colors text-base flex-shrink-0 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {selectedService.price && (
+              <div className="mb-4 p-3.5 rounded-xl border border-zinc-800 bg-zinc-950 flex items-center justify-between gap-3 text-left">
+                <div className="text-left">
+                  <span className="text-xs sm:text-sm font-semibold block text-white text-left font-sans">Valor do Serviço:</span>
+                  <span className="text-xs text-gray-400 block text-left font-sans mt-0.5">
+                    {selectedService.price.toLowerCase().includes('negociar') 
+                      ? 'Orçamento personalizado sob demanda' 
+                      : 'Taxa fixa de atendimento'}
+                  </span>
+                </div>
+                <span className="text-xl sm:text-2xl font-extrabold font-sans tracking-tight whitespace-nowrap text-right text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.35)]">
+                  {selectedService.price}
+                </span>
+              </div>
+            )}
+
+            <p className="text-white/90 text-sm sm:text-base leading-relaxed mb-4 text-left font-sans">
+              {selectedService.desc}
+            </p>
+
+            {/* CARD DE CONTATO DISCORD COM @WALGNY */}
+            <div className="p-4 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/30 mb-4 text-left">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#5865F2]/20">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#5865F2]/40 border border-[#5865F2] flex items-center justify-center text-base font-bold text-white shadow-[0_0_10px_rgba(88,101,242,0.5)]">
+                      S
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#18181b] rounded-full"></span>
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <strong className="text-white text-sm sm:text-base font-['Syne']">{discordDisplayName}</strong>
+                      <span className="text-xs bg-[#5865F2]/30 text-indigo-200 px-2 py-0.5 rounded font-mono font-bold">
+                        @{discordTag}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400 block truncate text-left font-sans mt-0.5">Atendimento direto no privado</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={copyDiscordTag}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 font-sans ${
+                    copiedDiscord
+                      ? 'bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                      : 'bg-white/10 hover:bg-white/20 text-gray-200 border border-white/10'
+                  }`}
+                  title="Copiar @ do Discord"
+                >
+                  {copiedDiscord ? '✓ Copiado!' : '📋 Copiar @'}
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2 text-xs sm:text-sm text-gray-300 text-left font-sans">
+                <div className="flex items-start gap-2 text-left">
+                  <span className="text-cyan-400 font-bold">1.</span>
+                  <span>Entre no servidor do Discord pelo botão abaixo.</span>
+                </div>
+                <div className="flex items-start gap-2 text-left">
+                  <span className="text-cyan-400 font-bold">2.</span>
+                  <span>Procure por <strong className="text-white">@{discordTag}</strong> ({discordDisplayName}) no chat.</span>
+                </div>
+                <div className="flex items-start gap-2 text-left">
+                  <span className="text-cyan-400 font-bold">3.</span>
+                  <span><strong>Abra um chat no privado</strong> e mande seu pedido ou dúvida (não precisa enviar amizade!).</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <a 
+                href={discordLink} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-xl font-bold text-white font-['Syne'] transition-all transform hover:scale-[1.01] shadow-[0_0_20px_rgba(88,101,242,0.4)] text-sm sm:text-base"
+                style={{ background: 'linear-gradient(135deg, #5865F2, #4752C4)' }}
+              >
+                <svg className="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028 14.09 14.09 0 001.226-1.994.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                <span>Entrar no Discord & Chamar no Privado</span>
+              </a>
+
+              <button 
+                onClick={copyDiscordTag}
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl font-semibold text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs sm:text-sm font-sans"
+              >
+                <span>{copiedDiscord ? '✓ @walgny copiado para a área de transferência!' : '📋 Copiar usuário @walgny'}</span>
+              </button>
+            </div>
+
+            <div className="mt-3.5 pt-3 border-t border-white/10 text-center">
+              <p className="text-xs text-gray-400 font-sans">
+                ⚡ Atendimento direto com <strong>Skymira (@walgny)</strong> no Discord Oficial.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {pollModalOpen && (
         <div className="modal-overlay exclusive-modal open" onClick={(e) => { if (e.target === e.currentTarget) setPollModalOpen(false); }}>
           <div className="modal">
@@ -445,7 +592,16 @@ export default function App() {
                     Vamos trabalhar juntos?
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                    <a href="mailto:crishflycriatives@gmail.com" className="inline-flex items-center justify-center gap-2 bg-[#222] text-white border border-[#333] px-6 py-3 rounded-md font-medium transition-all duration-300 hover:bg-[#333] hover:border-red-600 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,0,0,0.2)] active:scale-95">
+                    <a 
+                      href={discordLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 bg-[#5865F2] text-white font-bold px-6 py-3 rounded-md transition-all duration-300 hover:bg-[#4752C4] hover:scale-105 hover:shadow-[0_0_20px_rgba(88,101,242,0.4)] active:scale-95 text-sm"
+                    >
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028 14.09 14.09 0 001.226-1.994.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                        Falar no Discord
+                    </a>
+                    <a href="mailto:crishflycriatives@gmail.com" className="inline-flex items-center justify-center gap-2 bg-[#222] text-white border border-[#333] px-6 py-3 rounded-md font-medium transition-all duration-300 hover:bg-[#333] hover:border-red-600 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,0,0,0.2)] active:scale-95 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-red-500"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                         crishflycriatives@gmail.com
                     </a>
@@ -479,27 +635,106 @@ export default function App() {
               </div>
             </div>
             <h1>Crishfly</h1>
-            <p className="tagline">arte &#8226; moda &#8226; conteúdo &#10022;</p>
-            <div className="badges">
-              <span className="badge badge-art">&#9999;&#65039; Artista</span>
-              <span className="badge badge-content">&#128242; Creator</span>
-              <span className="badge badge-fashion">&#128247; Moda</span>
+            <div className="w-full flex items-center justify-center gap-2 sm:gap-2.5 mt-2 mb-3 flex-wrap text-center mx-auto">
+              <span 
+                className="px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 border font-sans shadow-md"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(29, 78, 216, 0.12))',
+                  color: '#93c5fd',
+                  borderColor: 'rgba(59, 130, 246, 0.45)',
+                  boxShadow: '0 2px 10px rgba(37, 99, 235, 0.2)'
+                }}
+              >
+                <span>arte</span>
+                <span className="text-blue-300 font-extrabold text-sm leading-none">•</span>
+              </span>
+
+              <span 
+                className="px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 border font-sans shadow-md"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.22), rgba(202, 138, 4, 0.12))',
+                  color: '#fde047',
+                  borderColor: 'rgba(234, 179, 8, 0.45)',
+                  boxShadow: '0 2px 10px rgba(234, 179, 8, 0.2)'
+                }}
+              >
+                <span>moda</span>
+                <span className="text-yellow-300 font-extrabold text-sm leading-none">•</span>
+              </span>
+
+              <span 
+                className="px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 border font-sans shadow-md"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(147, 51, 234, 0.12))',
+                  color: '#e9d5ff',
+                  borderColor: 'rgba(168, 85, 247, 0.45)',
+                  boxShadow: '0 2px 10px rgba(168, 85, 247, 0.2)'
+                }}
+              >
+                <span>conteúdo</span>
+                <span className="text-purple-300 font-extrabold text-sm leading-none">•</span>
+              </span>
+            </div>
+            <div className="profile-badges-container w-full flex items-center justify-center gap-2.5 sm:gap-3 mt-4 flex-wrap text-center mx-auto">
+              <button 
+                onClick={() => setOpenServiceCategory(openServiceCategory === 'mei' ? null : 'mei')}
+                className="group px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 active:scale-95 border cursor-pointer font-sans shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(29, 78, 216, 0.12))',
+                  color: '#93c5fd',
+                  borderColor: 'rgba(59, 130, 246, 0.45)',
+                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.2)'
+                }}
+              >
+                <Building2 className="w-4 h-4 text-blue-400" />
+                <span>Despachante MEI</span>
+                <span className="text-blue-300 font-extrabold text-sm leading-none">•</span>
+              </button>
+
+              <button 
+                onClick={() => setOpenServiceCategory(openServiceCategory === 'video' ? null : 'video')}
+                className="group px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 active:scale-95 border cursor-pointer font-sans shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.22), rgba(202, 138, 4, 0.12))',
+                  color: '#fde047',
+                  borderColor: 'rgba(234, 179, 8, 0.45)',
+                  boxShadow: '0 4px 15px rgba(234, 179, 8, 0.2)'
+                }}
+              >
+                <Clapperboard className="w-4 h-4 text-yellow-400" />
+                <span>Editor VSL & IA</span>
+                <span className="text-yellow-300 font-extrabold text-sm leading-none">•</span>
+              </button>
+
+              <button 
+                onClick={() => setOpenServiceCategory(openServiceCategory === 'art' ? null : 'art')}
+                className="group px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 active:scale-95 border cursor-pointer font-sans shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(147, 51, 234, 0.12))',
+                  color: '#e9d5ff',
+                  borderColor: 'rgba(168, 85, 247, 0.45)',
+                  boxShadow: '0 4px 15px rgba(168, 85, 247, 0.2)'
+                }}
+              >
+                <Palette className="w-4 h-4 text-purple-400" />
+                <span>Venda de Artes</span>
+                <span className="text-purple-300 font-extrabold text-sm leading-none">•</span>
+              </button>
             </div>
           </div>
 
-          <div className="section-label">Venha Produzir Comigo!</div>
-          <a href="https://crishflyrecruta.netlify.app/" className="link-card card-exclusive" style={{ borderLeftColor: '#6bcb77' }} onClick={(e) => handleExternalLink(e, "https://crishflyrecruta.netlify.app/")}>
-            <div className="card-icon icon-exclusive" style={{ background: 'rgba(107, 203, 119, 0.2)' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#6bcb77" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div className="card-info">
-              <div className="card-title" style={{ color: '#6bcb77' }}>Participe dos meus Vídeos!</div>
-              <div className="card-sub">Procuro Fandubbers, Editores e Artistas ✨</div>
-            </div>
-            <span className="card-arrow">&#8594;</span>
-          </a>
-
-          <div className="section-label">Redes Sociais</div>
+          {/* SEÇÃO PRESTAÇÃO DE SERVIÇOS (3 CARDS SEPARADOS) */}
+          <ServicesSection
+            openCategory={openServiceCategory}
+            onToggleCategory={(cat) => setOpenServiceCategory(openServiceCategory === cat ? null : cat)}
+            onServiceInquiry={(s) => handleServiceInquiry(s as any)}
+            discordTag={discordTag}
+            discordDisplayName={discordDisplayName}
+            discordLink={discordLink}
+            copiedDiscord={copiedDiscord}
+            onCopyDiscordTag={copyDiscordTag}
+          />
+                    <div className="section-label">Redes Sociais</div>
 
           <a href="https://www.instagram.com/crishfly?igsh=b3U0dmdjbjE3dWto" className="link-card card-insta" onClick={(e) => handleExternalLink(e, "https://www.instagram.com/crishfly?igsh=b3U0dmdjbjE3dWto")}>
             <div className="card-icon icon-insta"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg></div>
@@ -521,32 +756,52 @@ export default function App() {
 
           <a href="https://discord.gg/KxEYfFnpcW" className="link-card card-discord" onClick={(e) => handleExternalLink(e, "https://discord.gg/KxEYfFnpcW")}>
             <div className="card-icon icon-discord"><svg viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028 14.09 14.09 0 001.226-1.994.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" /></svg></div>
-            <div className="card-info"><div className="card-title">Discord</div><div className="card-sub">Entra na comunidade!</div></div>
+            <div className="card-info"><div className="card-title">Discord Oficial</div><div className="card-sub">@walgny • Entra no servidor e mande seu pedido ✨</div></div>
             <span className="card-arrow">&#8594;</span>
           </a>
 
-          <div className="section-label">Portfólio & Desenhos</div>
-
-          <a href="#" className="link-card card-portfolio-btn" onClick={openPortfolio}>
-            <div className="card-icon icon-portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="#c77dff" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg></div>
-            <div className="card-info">
-              <div className="card-title" style={{ background: 'linear-gradient(135deg,#c77dff,#4d96ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Meu Portfólio</div>
-              <div className="card-sub">Ver meu portfólio completo ✨</div>
-            </div>
-            <span className="card-arrow" style={{ color: '#c77dff' }}>&#8594;</span>
-          </a>
+          <div className="section-label">Meus Desenhos & Arte</div>
 
           <button className={`drawings-btn ${drawingsOpen ? 'open' : ''}`} onClick={() => setDrawingsOpen(!drawingsOpen)}>
-            <div className="db-icon">&#127912;</div>
+            <div className="db-icon flex items-center justify-center">
+              <Palette className="w-6 h-6 text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]" />
+            </div>
             <div className="db-info"><div className="db-title">Meus Desenhos & Arte</div><div className="db-sub">Toque para ver todas as criações ✨</div></div>
             <span className="db-arrow">&#8250;</span>
           </button>
 
           <div className={`drawings-panel ${drawingsOpen ? 'open' : ''}`}>
-            <a href="https://pin.it/3QqCs85Fo" target="_blank" rel="noreferrer" className="cta-banner">
-              <div className="cta-icon">&#128204;</div>
-              <div className="cta-text"><strong>Ver todos no Pinterest &#8594;</strong><span>Arte original • Personagens • Ilustrações</span></div>
-            </a>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+              <button 
+                onClick={() => handleServiceInquiry({
+                  title: "Encomenda de Desenho & Ilustração Personalizada",
+                  price: "A negociar",
+                  desc: "Arte personalizada exclusiva: retratos digitais, personagens, fanarts, avatares para streamers e ilustrações sob medida com alta resolução.",
+                  category: "Artes & Ilustrações"
+                })}
+                className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 hover:border-purple-400 p-3 rounded-xl text-left transition-all hover:scale-[1.01] flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/40 flex items-center justify-center flex-shrink-0">
+                    <Paintbrush className="w-4 h-4 text-purple-300" />
+                  </div>
+                  <div>
+                    <strong className="block text-xs text-white font-['Syne'] font-bold">Encomendar Desenho</strong>
+                    <span className="text-[10px] text-purple-200">Artes sob medida & retratos • A negociar</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-purple-300 bg-purple-500/20 px-2 py-1 rounded font-sans">Pedir →</span>
+              </button>
+
+              <a href="https://pin.it/3QqCs85Fo" target="_blank" rel="noreferrer" className="bg-white/5 border border-white/10 hover:border-white/20 p-3 rounded-xl text-left transition-all hover:scale-[1.01] flex items-center justify-between">
+                <div>
+                  <strong className="block text-xs text-white font-['Syne'] font-bold">📌 Ver no Pinterest</strong>
+                  <span className="text-[10px] text-gray-400">Galeria de criações autorais</span>
+                </div>
+                <span className="text-xs text-gray-400">Abrir ↗</span>
+              </a>
+            </div>
+            
             <div className="gallery-grid">
               {galleryImgs.map((img, i) => (
                 <div className="gallery-item" key={i} onClick={() => setLightboxIndex(i)}>
@@ -627,33 +882,28 @@ export default function App() {
       )}
 
       {/* Musiquinha de Fundo */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center justify-center gap-3">
+      <div className="fixed bottom-4 right-4 z-40 flex items-center justify-center gap-2">
         {musicMuted && (
-          <div className="bg-white/90 text-pink-600 px-3 md:px-4 py-2 rounded-2xl text-xs md:text-sm font-bold shadow-[0_0_15px_rgba(255,105,180,0.6)] animate-bounce max-w-[150px] md:max-w-none text-center cursor-pointer pointer-events-auto" onClick={() => setMusicMuted(false)}>
-            Clica aqui pra ouvir uma musiquinha! 🥺🎶
+          <div 
+            className="bg-black/85 text-pink-300 border border-pink-500/40 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-[0_0_15px_rgba(255,105,180,0.3)] animate-bounce cursor-pointer backdrop-blur-md" 
+            onClick={() => setMusicMuted(false)}
+          >
+            Tocar musiquinha 🎵
           </div>
         )}
 
         <button
           onClick={() => setMusicMuted(!musicMuted)}
-          className={`group flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all duration-300 backdrop-blur-md overflow-hidden ${
+          className={`group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border transition-all duration-300 backdrop-blur-md overflow-hidden cursor-pointer ${
             musicMuted 
-              ? 'bg-black/80 border-gray-500 shadow-[0_0_10px_rgba(156,163,175,0.5)]' 
-              : 'bg-black/60 border-pink-500 shadow-[0_0_15px_#ff00ff,inset_0_0_10px_#ff00ff] hover:shadow-[0_0_25px_#ff00ff,inset_0_0_15px_#ff00ff]'
+              ? 'bg-black/80 border-gray-600/60 shadow-md' 
+              : 'bg-black/70 border-pink-500 shadow-[0_0_15px_#ff00ff,inset_0_0_8px_#ff00ff]'
           }`}
           title={musicMuted ? "Desmutar musiquinha" : "Mutar musiquinha"}
         >
-          <span className={`text-xl md:text-2xl transition-all duration-300 ${!musicMuted ? 'animate-pulse drop-shadow-[0_0_8px_#ff00ff]' : 'grayscale opacity-60'}`}>
+          <span className={`text-base sm:text-xl transition-all duration-300 ${!musicMuted ? 'animate-pulse' : 'opacity-60'}`}>
             {musicMuted ? '🔇' : '🎵'}
           </span>
-          
-          {/* Neon Glow Rings */}
-          {!musicMuted && (
-            <>
-              <div className="absolute inset-0 rounded-full border border-pink-400 opacity-50 animate-[ping_2s_ease-out_infinite]"></div>
-              <div className="absolute inset-0 rounded-full border border-purple-500 opacity-30 animate-[ping_3s_ease-out_infinite_animation-delay-500ms]"></div>
-            </>
-          )}
         </button>
       </div>
 

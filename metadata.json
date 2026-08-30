@@ -1,6 +1,8 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Crishfly ✦ Serviços & Portfólio",
+  "description": "Hub oficial de Crishfly: Serviços de Despachante Digital MEI, Edição de Vídeo VSL & Modelos IA, Venda de Desenhos, Portfólio e Redes Sociais.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

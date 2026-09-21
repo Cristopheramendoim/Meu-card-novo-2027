@@ -167,6 +167,18 @@ export default function App() {
     });
   };
 
+  // Ensure browser tab favicon is set
+  useEffect(() => {
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.type = 'image/png';
+    link.href = '/perfil/1769448335268~2.png';
+  }, []);
+
   // Solar & Synthwave Wave Background logic
   useEffect(() => {
     const canvas = waterBgRef.current;

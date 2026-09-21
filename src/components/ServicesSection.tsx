@@ -26,6 +26,7 @@ interface ServicesSectionProps {
   discordLink: string;
   copiedDiscord: boolean;
   onCopyDiscordTag: () => void;
+  onOpenPortfolio?: (e: React.MouseEvent) => void;
 }
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({
@@ -37,6 +38,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   discordLink,
   copiedDiscord,
   onCopyDiscordTag,
+  onOpenPortfolio,
 }) => {
   return (
     <div className="w-full">
@@ -227,7 +229,30 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
 
           {openCategory === 'video' && (
             <div className="p-4 sm:p-6 pt-0 border-t border-zinc-800 animate-fadeIn space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3">
+              {onOpenPortfolio && (
+                <div 
+                  onClick={onOpenPortfolio}
+                  className="mt-3 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-purple-500/20 border border-yellow-500/40 hover:border-yellow-400 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-400/20 border border-yellow-400/40 flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                      🎬
+                    </div>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-bold text-white font-['Syne'] flex items-center gap-2">
+                        <span>Ver Portfólio de Edição & VSL</span>
+                        <span className="text-[10px] bg-yellow-400/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-400/40">Exemplos</span>
+                      </h4>
+                      <p className="text-xs text-gray-300 mt-0.5">Assista a amostras de vídeos dinâmicos, VSL e técnicas de Direct Response</p>
+                    </div>
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-yellow-300 bg-yellow-400/20 group-hover:bg-yellow-400 group-hover:text-black px-3 py-1.5 rounded-lg border border-yellow-400/40 transition-all font-sans">
+                    Abrir 🎬 →
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                 {[
                   {
                     title: "Edição de Vídeo Fly & VSL",
